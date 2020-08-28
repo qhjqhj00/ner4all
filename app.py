@@ -39,7 +39,7 @@ class decode_thread(threading.Thread):
 
     def run(self):
         if self.task == 'general':
-            self.res = process_general(ling(self.text))
+            self.res = process_general(self.text, ling)
         elif self.task == 'addr':
             self.res = process_addr(process_match_res(self.text, addr), self.text)
         elif self.task == 'music':

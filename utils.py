@@ -85,15 +85,27 @@ def process_smart(output):
         res.append(tmp)
     return res
 
-def process_general(output):
+def process_general(text, ling):
+    in_string = text
+    in_string = in_string.replace('今天', '今日')
+    in_string = in_string.replace('明天', '明日')
+    in_string = in_string.replace('昨天', '昨日')
     res = []
+    output = ling(in_string)
     for e in output:
+        if e['body'] in ['今日', '昨日', '明日']:
+            e['body'] = text[e['start']:e['end']]
         res.append({
                 'text': e['body'],
                 'start': e['start'],
                 'end': e['end'],
                 'type': e['dim'],
                 'properties': e['value']})
+    tokenized = list(jieba.tokenize(text))
+    boundaries = {k[1]:k[2] for k in tokenized if k[2] > k[1] + 1}
+    for i in range(len(res) - 1, -1, -1):
+        if res[i]['start'] not in boundaries:
+            del res[i]
     return res
 
 def post_process(result):
