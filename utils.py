@@ -1,7 +1,12 @@
 import jieba 
 import jieba.posseg as pseg
 import json
+import re
 
+regex = {
+    'id_number': '^[1-9]\d{7}((0\d)|(1[0-2]))(([0|1|2]\d)|3[0-1])\d{3}$|^[1-9]\d{5}[1-9]\d{3}((0\d)|(1[0-2]))(([0|1|2]\d)|3[0-1])\d{3}([0-9]|X)$',
+    'passport': '^[E|G]\d{8}$'
+}
 def process_match_res(text, d):
     dres = d.multi_match(text)
     res = []
@@ -13,6 +18,20 @@ def process_match_res(text, d):
         tmp['type'] = list(dres[k]['value'].keys())[0]
         tmp['properties'] = dres[k]['value'][tmp['type']]['type']
         res.append(tmp)
+    return res
+
+def process_regex(text):
+    res = []
+    for k in regex:
+        r = re.finditer(regex[k], text)
+        for e in r:
+            tmp = {}
+            tmp['text'] = e.group(0)
+            tmp['start'] = e.start()
+            tmp['end'] = e.end()
+            tmp['type'] = k
+            tmp['properties'] = ''
+            res.append(tmp)
     return res
 
 def process_music(text, d):
@@ -69,6 +88,8 @@ def process_smart(output):
         properties = {}
         if entity.type.name.startswith(('loc.admin', 'time', 'number', 'quantity')):
             continue
+        if entity.type.name.startswith(('basic')):
+            print(entity.type.name)
         tmp = {
             'text': entity.str, 
             'start': entity.offset, 
@@ -86,15 +107,9 @@ def process_smart(output):
     return res
 
 def process_general(text, ling):
-    in_string = text
-    in_string = in_string.replace('今天', '今日')
-    in_string = in_string.replace('明天', '明日')
-    in_string = in_string.replace('昨天', '昨日')
     res = []
-    output = ling(in_string)
+    output = ling(text)
     for e in output:
-        if e['body'] in ['今日', '昨日', '明日']:
-            e['body'] = text[e['start']:e['end']]
         res.append({
                 'text': e['body'],
                 'start': e['start'],

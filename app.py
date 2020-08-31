@@ -46,13 +46,15 @@ class decode_thread(threading.Thread):
             self.res = process_music(self.text, music)
         elif self.task == 'ner':
             self.res = process_smart(engine.parse_text(self.text))
+        elif self.task == 'regex':
+            self.res = process_regex(self.text)
 
 @app.route('/api')
 def get():
     text = request.args.get('text', '')
     names = locals()
     threads = []
-    for task in ['general', 'addr', 'ner', 'music']:
+    for task in ['general', 'addr', 'ner', 'music', 'regex']:
         names['tagger%s' % task] = decode_thread(task, text)
         threads.append(names['tagger%s' % task])
     for thread in threads:
